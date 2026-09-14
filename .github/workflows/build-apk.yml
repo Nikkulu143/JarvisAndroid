@@ -1,0 +1,46 @@
+name: Build Jarvis APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get source
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Arrange Android project
+        run: |
+          mkdir -p app/src/main/java/com/jarvis/voice
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/values
+
+          mv AndroidManifest.xml app/src/main/AndroidManifest.xml
+          mv MainActivity.kt app/src/main/java/com/jarvis/voice/MainActivity.kt
+          mv JarvisNotificationService.kt app/src/main/java/com/jarvis/voice/JarvisNotificationService.kt
+          mv activity_main.xml app/src/main/res/layout/activity_main.xml
+          mv styles.xml app/src/main/res/values/styles.xml
+          mv build.gradle.kts app/build.gradle.kts
+
+      - name: Install Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.11.1-bin.zip
+          unzip -q gradle-8.11.1-bin.zip
+          echo "$PWD/gradle-8.11.1/bin" >> $GITHUB_PATH
+
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jarvis-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
